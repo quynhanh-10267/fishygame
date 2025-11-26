@@ -5,8 +5,10 @@ public class FishyGame  {
     public static void main(String[] args) {
         JFrame window = new JFrame("Fishy Game");
         GamePanel gamePanel = new GamePanel();// bảng vẽ và xử lý logic
-
-        window.add(gamePanel);
+        
+        UI menu = new UI(window, gamePanel);
+        window.add(menu);
+        
         window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         window.setResizable(false);
         window.pack();
@@ -14,6 +16,5 @@ public class FishyGame  {
         
         window.setVisible(true);
         
-        gamePanel.startGameThread();
     }
 }
