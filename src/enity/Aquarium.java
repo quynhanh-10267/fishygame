@@ -1,6 +1,7 @@
 package enity;
 
 import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Random;
@@ -36,11 +37,13 @@ public class Aquarium extends Entity {
             obj.direction = "left";
         }
         
-        obj.name = "Food"; // 70% là thức ăn
+        obj.solidArea = new Rectangle(obj.x, obj.y, gp.tileSize, gp.tileSize);
+        
+        obj.name = "mer";
         obj.speed = 5;
         if(obj.direction == "left") {
             try {
-                obj.up1 = ImageIO.read(getClass().getResourceAsStream("/res/eat1.png"));
+                obj.up1 = ImageIO.read(getClass().getResourceAsStream("/res/"+ obj.name +"1.png"));
             } catch (IOException e) {
                 System.out.println("Lỗi khi tải ảnh thức ăn!");
                 e.printStackTrace();
@@ -48,7 +51,7 @@ public class Aquarium extends Entity {
         } else
         {
             try {
-                obj.up1 = ImageIO.read(getClass().getResourceAsStream("/res/eat2.png"));
+                obj.up1 = ImageIO.read(getClass().getResourceAsStream("/res/"+ obj.name +"2.png"));
             } catch (IOException e) {
                 System.out.println("Lỗi khi tải ảnh thức ăn!");
                 e.printStackTrace();
@@ -73,9 +76,13 @@ public class Aquarium extends Entity {
             Entity e = entities.get(i);
             if (e != null) {
                 if(e.direction == "left")
+                {
                     e.x -= e.speed; // Di chuyển sang trái
-                else
+                    e.solidArea.x = e.x;
+                } else {
                     e.x += e.speed; // Di chuyển sang phải
+                    e.solidArea.x = e.x;
+                }
             }
             // (Tùy chọn) Xóa cá nếu bơi ra xa quá hoặc danh sách quá dài
         }
@@ -86,7 +93,7 @@ public class Aquarium extends Entity {
         for (int i = 0; i < entities.size(); i++) {
             Entity e = entities.get(i);
             if (e != null) { 
-                g2.drawImage(e.up1, e.x, e.y, gp.tileSize, gp.tileSize, null);
+                g2.drawImage(e.up1, e.x, e.y, e.up1.getWidth(), e.up1.getHeight(), null);
             }
         }
     }

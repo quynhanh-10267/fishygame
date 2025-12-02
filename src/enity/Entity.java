@@ -1,5 +1,6 @@
 package enity;
 
+import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 
 public class Entity {
@@ -13,7 +14,12 @@ public class Entity {
     public BufferedImage[] turnFrames;
     public String state = "idle";
 
-    public static void main(String[] args) {}
+    public Rectangle solidArea;
+
+    // collision properties
+    public int width = 64;
+    public int height = 64;
+    public boolean collisionOn = false;
 
     public int spriteCounter = 0;
     public int spriteNum = 1;

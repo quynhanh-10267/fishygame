@@ -1,6 +1,7 @@
 package enity;
 
 import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 
 import javax.imageio.ImageIO;
@@ -14,7 +15,6 @@ public class Player extends Entity {
     // >> SỐ LƯỢNG FRAME CHO MỖI TRẠNG THÁI
     final int SWIM_IDLE_FRAMES = 12;
     final int TURN_FRAMES = 6;
-    
     
     private String currentFacing = "right"; // Mặc định cá hướng sang phải
 
@@ -38,6 +38,7 @@ public class Player extends Entity {
         spriteNum=0;
         currentFacing = "left";
         direction = "down";
+        solidArea = new Rectangle(x, y, gp.tileSize, gp.tileSize);
     }
     
     
@@ -66,7 +67,27 @@ public class Player extends Entity {
             e.printStackTrace();
         }
     }
-    
+    public void collisionChecker(Aquarium aq){
+        // Update solidArea position
+        solidArea.x = x;
+        solidArea.y = y;
+
+        // Assume no collision at start of check
+        collisionOn = false;
+
+        for (int i = 0; i < aq.entities.size(); i++) {
+            Entity e = aq.entities.get(i);
+            if (e == null) continue;
+
+            // Check intersection using helper method
+            if (solidArea.intersects(e.solidArea)) {
+                collisionOn = true;
+                // Basic behaviour: remove the entity (eaten/collected)
+                aq.entities.remove(i);
+                i--; // adjust index after removal
+            }
+        }
+    }
     public void update() {
         
         boolean isMoving = keyH.upPressed || keyH.downPressed || keyH.leftPressed || keyH.rightPressed;
@@ -156,7 +177,6 @@ public class Player extends Entity {
                 }
             }
         }
-        
     }
     public void draw(Graphics2D g2) {
         BufferedImage currentFrame = null;

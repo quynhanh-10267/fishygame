@@ -12,6 +12,7 @@ import java.io.IOException;
 import enity.Player;
 import enity.Aquarium;
 import java.awt.Graphics;
+
 public class GamePanel extends JPanel implements Runnable {
     //screen settings
     final int originalTileSize = 16; // 16x16 tile
@@ -90,6 +91,7 @@ public class GamePanel extends JPanel implements Runnable {
             g.drawImage(background, 0, 0, getWidth(), getHeight(), null);
         //player
         Graphics2D g2 = (Graphics2D)g;
+        player.collisionChecker(aquarium);
         player.draw(g2);
         aquarium.draw(g2);
         g2.dispose();// dừng tài nguyên
