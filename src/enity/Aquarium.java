@@ -27,34 +27,34 @@ public class Aquarium extends Entity {
     public void spawnEntity() {
         Entity obj = new Entity();
 
-        // 1. Random vị trí (trong phạm vi World)
-        obj.x = 0; // Bắt đầu từ bên trái
+        // 1. Random vị trí (trong phạm vi screenHeight)
+        obj.x = rand.nextInt(0,2);
+        obj.direction = "right";
         obj.y = rand.nextInt(gp.screenHeight - gp.tileSize); // Vị trí y ngẫu nhiên
+        if(obj.x == 1) {
+            obj.x = gp.screenWidth; // Bên ngoài
+            obj.direction = "left";
+        }
         
-        // 2. Random loại cá
-        int rate = rand.nextInt(100) + 1; // 1 đến 100
-        
-        if (rate <= 70) {
-            obj.name = "Food"; // 70% là thức ăn
-            obj.speed = 5;
+        obj.name = "Food"; // 70% là thức ăn
+        obj.speed = 5;
+        if(obj.direction == "left") {
             try {
                 obj.up1 = ImageIO.read(getClass().getResourceAsStream("/res/eat1.png"));
             } catch (IOException e) {
                 System.out.println("Lỗi khi tải ảnh thức ăn!");
                 e.printStackTrace();
             }
-            // obj.image = ... (Load ảnh cá bé ở đây hoặc trong class Entity)
-        } else {
-            obj.name = "Enemy"; // 30% là kẻ thù
-            obj.speed = 7;
+        } else
+        {
             try {
                 obj.up1 = ImageIO.read(getClass().getResourceAsStream("/res/eat2.png"));
             } catch (IOException e) {
-                System.out.println("Lỗi khi tải ảnh kẻ thù!");
+                System.out.println("Lỗi khi tải ảnh thức ăn!");
                 e.printStackTrace();
             }
-            // obj.image = ... (Load ảnh cá mập)
         }
+        // obj.image = ... (Load ảnh cá bé ở đây hoặc trong class Entity)
 
         entities.add(obj); // Thêm vào danh sách
     }
@@ -72,7 +72,10 @@ public class Aquarium extends Entity {
         for (int i = 0; i < entities.size(); i++) {
             Entity e = entities.get(i);
             if (e != null) {
-                e.x += e.speed; // Di chuyển sang phải
+                if(e.direction == "left")
+                    e.x -= e.speed; // Di chuyển sang trái
+                else
+                    e.x += e.speed; // Di chuyển sang phải
             }
             // (Tùy chọn) Xóa cá nếu bơi ra xa quá hoặc danh sách quá dài
         }
