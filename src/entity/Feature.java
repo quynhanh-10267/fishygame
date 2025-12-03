@@ -23,8 +23,6 @@ public class Feature {
 
         private void loadImages() {
             try {
-                // Giả định tên file ảnh là name + "1.png" (trái) và name + "2.png" (phải)
-                // Bạn cần đảm bảo file tồn tại trong thư mục /res/
                 imageLeft = ImageIO.read(getClass().getResourceAsStream("/res/" + name + "swim1.png"));
                 imageRight = ImageIO.read(getClass().getResourceAsStream("/res/" + name + "swim2.png"));
             } catch (IOException | IllegalArgumentException e) {
