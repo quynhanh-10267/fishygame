@@ -2,216 +2,250 @@ package entity;
 
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
-import java.awt.image.BufferedImage;
-
-import javax.imageio.ImageIO;
 import java.awt.geom.AffineTransform;
+import java.awt.image.BufferedImage;
+import javax.imageio.ImageIO;
 import main.GamePanel;
-import main.KeyHandler;
+import input.MouseHandler;
 
 public class Player extends Entity {
     GamePanel gp;
-    KeyHandler keyH;
-    // >> SỐ LƯỢNG FRAME CHO MỖI TRẠNG THÁI
-    final int SWIM_IDLE_FRAMES = 12;
-    final int TURN_FRAMES = 6;
+    MouseHandler mouseH;
     
-    private String currentFacing = "right"; // Mặc định cá hướng sang phải
-
-    public Player(GamePanel gp, KeyHandler keyH) {
+    // --- 1. CONSTANTS ---
+    final int EAT_FRAMES = 6;
+    final int IDLE_FRAMES = 6;
+    final int SWIM_FRAMES = 15;
+    final int TURN_FRAMES = 5;
+    
+    // >> CẬP NHẬT KÍCH THƯỚC GỐC THEO ẢNH
+    final int BASE_WIDTH = 125; 
+    final int BASE_HEIGHT = 105; 
+    
+    // --- 2. ASSETS ---
+    public BufferedImage[] eatFrames;
+    public BufferedImage[] idleFrames;
+    public BufferedImage[] swimFrames;
+    public BufferedImage[] turnFrames;
+    public BufferedImage upBubble; 
+    
+    // --- 3. MOVEMENT & LOGIC VARIABLES ---
+    private double exactX, exactY;
+    private double easing = 0.05;
+    private String currentFacing = "right"; 
+    
+    // --- 4. LEVEL & EFFECT STATE ---
+    private int currentLevel = 1; 
+    private int effectCounter = 0; 
+    private boolean showEffect = false;
+    
+    public Player(GamePanel gp, MouseHandler mouseH) {
         this.gp = gp;
-        this.keyH = keyH;
-        // Khởi tạo mảng frame
-        idleFrames = new BufferedImage[SWIM_IDLE_FRAMES];
-        swimFrames = new BufferedImage[SWIM_IDLE_FRAMES];
-        turnFrames = new BufferedImage[TURN_FRAMES];
-        setDefaultValues();
+        this.mouseH = mouseH;
         
-        getPlayerImageByLoop();
+        eatFrames = new BufferedImage[EAT_FRAMES];
+        idleFrames = new BufferedImage[IDLE_FRAMES];
+        swimFrames = new BufferedImage[SWIM_FRAMES];
+        turnFrames = new BufferedImage[TURN_FRAMES];
+        
+        setDefaultValues();
+        getPlayerImageByLoop(); 
     }
 
     public void setDefaultValues() {
-        x = gp.screenWidth / 2 - gp.tileSize / 2;
-        y = gp.screenHeight / 2 - gp.tileSize / 2;
-        speed = 7;
+        currentLevel = 1;
+        updateSize(1.0); // Bắt đầu với tỷ lệ 1.0
+        
+        x = gp.worldWidth / 2 - width / 2;
+        y = gp.worldHeight / 2 - height / 2;
+        
+        exactX = x;
+        exactY = y;
+
+        speed = 5; 
         state = "idle";
-        spriteNum=0;
-        currentFacing = "left";
-        direction = "down";
-        solidArea = new Rectangle(x, y, gp.tileSize, gp.tileSize);
+        direction = "right";
+        currentFacing = "right";
+        solidArea = new Rectangle((int)x, (int)y, width, height);
     }
     
-    
+    private void updateSize(double scale) {
+        // Tính toán kích thước mới dựa trên tỷ lệ
+        this.width = (int)(BASE_WIDTH * scale);
+        this.height = (int)(BASE_HEIGHT * scale);
+        
+        if (solidArea != null) {
+            solidArea.width = this.width;
+            solidArea.height = this.height;
+        }
+    }
+
     public void getPlayerImageByLoop() {
         try {
-            // >> TẢI IDLE FRAMES (idle1.png -> idle10.png)
-            for (int i = 0; i < SWIM_IDLE_FRAMES; i++) {
-                String fileName = "/res/idle" + (i + 1) + ".png";
-                idleFrames[i] = ImageIO.read(getClass().getResourceAsStream(fileName));
-            }
-
-           
-            for (int i = 0; i < SWIM_IDLE_FRAMES; i++) {
-                String fileName = "/res/swim" + (i + 1) + ".png";
-                swimFrames[i] = ImageIO.read(getClass().getResourceAsStream(fileName));
-            }
-
-          
-            for (int i = 0; i < TURN_FRAMES; i++) {
-                String fileName = "/res/turn" + (i + 1) + ".png";
-                turnFrames[i] = ImageIO.read(getClass().getResourceAsStream(fileName));
-            }
+            for (int i = 0; i < EAT_FRAMES; i++) 
+                eatFrames[i] = ImageIO.read(getClass().getResourceAsStream("/res/angelfish/angelfisheat" + (i + 1) + ".png"));
+            for (int i = 0; i < IDLE_FRAMES; i++) 
+                idleFrames[i] = ImageIO.read(getClass().getResourceAsStream("/res/angelfish/angelfishidle" + (i + 1) + ".png"));
+            for (int i = 0; i < SWIM_FRAMES; i++) 
+                swimFrames[i] = ImageIO.read(getClass().getResourceAsStream("/res/angelfish/angelfishswim" + (i + 1) + ".png"));
+            for (int i = 0; i < TURN_FRAMES; i++) 
+                turnFrames[i] = ImageIO.read(getClass().getResourceAsStream("/res/angelfish/angelfishturn" + (i + 1) + ".png"));
+            
+            upBubble = ImageIO.read(getClass().getResourceAsStream("/res/animation/up.png"));
 
         } catch (Exception e) {
-            System.err.println("Lỗi khi tải frame. Kiểm tra tên file và đường dẫn trong /res/");
             e.printStackTrace();
         }
     }
-    public void collisionChecker(Aquarium aq){
-        // Update solidArea position
+
+    public void update() {
+        checkLevelUp();
+
+        // Movement Logic
+        double centerX = exactX + width / 2.0;
+        double centerY = exactY + height / 2.0;
+        double mouseWorldX = mouseH.mouseX + gp.cameraX;
+        double mouseWorldY = mouseH.mouseY + gp.cameraY;
+
+        double dx = mouseWorldX - centerX;
+        double dy = mouseWorldY - centerY;
+        
+        exactX += dx * easing;
+        exactY += dy * easing;
+
+        // Boundary Check
+        if (exactX < 0) exactX = 0;
+        if (exactX > gp.worldWidth - width) exactX = gp.worldWidth - width;
+        if (exactY < 0) exactY = 0;
+        if (exactY > gp.worldHeight - height) exactY = gp.worldHeight - height;
+
+        x = (int) exactX;
+        y = (int) exactY;
+
+        // Facing Logic
+        if (!state.equals("eat") && !state.equals("turn")) {
+            if (Math.abs(dx) > 1.0) {
+                String newFacing = (dx > 0) ? "right" : "left";
+                if (!newFacing.equals(currentFacing)) {
+                    state = "turn";
+                    currentFacing = newFacing;
+                    spriteNum = 0; 
+                }
+            }
+        }
+
+        // State Update
+        if (!state.equals("turn") && !state.equals("eat")) {
+            double velocity = Math.sqrt(dx * easing * dx * easing + dy * easing * dy * easing);
+            state = (velocity > 0.5) ? "swim" : "idle";
+        }
+
         solidArea.x = x;
         solidArea.y = y;
 
-        // Assume no collision at start of check
-        collisionOn = false;
-
-        for (int i = 0; i < aq.entities.size(); i++) {
-            Entity e = aq.entities.get(i);
-            if (e == null) continue;
-
-            // Check intersection using helper method
-            if (solidArea.intersects(e.solidArea)) {
-                collisionOn = true;
-                // Basic behaviour: remove the entity (eaten/collected)
-                aq.entities.remove(i);
-                i--; // adjust index after removal
-            }
-        }
-    }
-    public void update() {
-        
-        boolean isMoving = keyH.upPressed || keyH.downPressed || keyH.leftPressed || keyH.rightPressed;
-        String newDirection = direction;
-       
-        boolean shouldTurn = false;
-        if (isMoving){
-            if (keyH.upPressed == true) {
-                newDirection = "up";
-                y = Math.max(0, y - speed);
-            }
-            else if (keyH.downPressed == true) {
-                newDirection = "down";
-                y = Math.min(gp.screenHeight - gp.tileSize, y + speed);
-            }
-            else if (keyH.leftPressed == true) {
-                newDirection = "left";
-                x -= speed;
-                currentFacing = "left"; 
-                if (!state.equals("turn")) { state = "swim"; }
-            }
-            else if (keyH.rightPressed == true) {
-                newDirection = "right";
-                x+= speed;
-                // Kiểm tra quay đầu: Đang hướng trái, nhấn phải
-                if (currentFacing.equals("left")) { shouldTurn = true; } 
-                currentFacing = "right"; // Cập nhật hướng mặt
-            }
-            
-            
-            if (newDirection.equals("left") && currentFacing.equals("right")) {
-                currentFacing = "left";
-                shouldTurn = true;
-            } else if (newDirection.equals("right") && currentFacing.equals("left")) {
-                currentFacing = "right";
-                shouldTurn = true;
-            }
-            
-            if (shouldTurn) {
-                state = "turn";
-                spriteNum = 0; // Bắt đầu hoạt hình quay đầu
-            } else if (!state.equals("turn")) {
-                 // Nếu không quay và không phải đang quay, thì bơi
-                 state = "swim";
-            }
-            direction = newDirection; // Cập nhật hướng di chuyển
-        } else {
-            // Không nhấn phím nào
-            if (!state.equals("turn")) { // Trừ khi đang trong quá trình quay
-                state = "idle";
-            }
-        }
-        // GIỚI HẠN DI 
-        x = Math.max(0, Math.min(gp.screenWidth - gp.tileSize, x));
-        y = Math.max(0, Math.min(gp.screenHeight - gp.tileSize, y));
-        
-        spriteCounter++; // vẽ lại hướng đi mỗi 10 frame
-        if (spriteCounter >10) {
-            if (spriteNum == 1) {
-                spriteNum = 2;
-            } else if (spriteNum == 2) {
-                spriteNum = 1;
-            }
-            spriteCounter = 0;   
-        }
-        int animationSpeed = 4; 
-
-        if (spriteCounter > animationSpeed) {
+        // Animation Counter
+        spriteCounter++;
+        if (spriteCounter > 3) {
+            spriteNum++;
             spriteCounter = 0;
-            spriteNum++; 
             
-            if (state.equals("turn")) {
-                // Hoạt hình Quay Đầu (Turn)
-                if (spriteNum >= TURN_FRAMES) {
-                    spriteNum = 0;
-                    state = "idle"; // Quay đầu xong, chuyển về đứng yên
-                }
+            if (state.equals("eat")) {
+                if (spriteNum >= EAT_FRAMES) { state = "swim"; spriteNum = 0; }
+            } else if (state.equals("turn")) {
+                if (spriteNum >= TURN_FRAMES) { state = "swim"; spriteNum = 0; }
             } else if (state.equals("swim")) {
-                // Hoạt hình Bơi (Swim)
-                if (spriteNum >= SWIM_IDLE_FRAMES) {
-                    spriteNum = 0; // Lặp lại hoạt hình bơi
-                }
-            } else if (state.equals("idle")) {
-                // Hoạt hình Đứng Yên (Idle)
-                 if (spriteNum >= SWIM_IDLE_FRAMES) {
-                    spriteNum = 0; // Lặp lại hoạt hình đứng yên
-                }
+                if (spriteNum >= SWIM_FRAMES) spriteNum = 0;
+            } else { // idle
+                if (spriteNum >= IDLE_FRAMES) spriteNum = 0;
             }
         }
+        
+        if (showEffect) {
+            effectCounter--;
+            if (effectCounter <= 0) showEffect = false;
+        }
     }
+    
+    private void checkLevelUp() {
+        int newLevel = currentLevel;
+        double scale = 1.0;
+
+        // >> LOGIC SCALE MỚI (Dựa trên tính toán diện tích)
+        if (gp.score >= 900) {
+            newLevel = 3;
+            scale = 1.6; // Size: 200x168 (Area 33,600 > Lionfish 28,640)
+        } else if (gp.score >= 300) {
+            newLevel = 2;
+            scale = 1.2; // Size: 150x126 (Area 18,900 > Surgeonfish 17,850)
+        } else {
+            newLevel = 1;
+            scale = 1.0; // Size: 125x105 (Area 13,125 > Minnow 3,120)
+        }
+
+        if (newLevel > currentLevel) {
+            currentLevel = newLevel;
+            updateSize(scale); 
+            showEffect = true;
+            effectCounter = 60; 
+            System.out.println("LEVEL UP! Scale: " + scale);
+        }
+    }
+
     public void draw(Graphics2D g2) {
         BufferedImage currentFrame = null;
         
-        // 1. CHỌN FRAME DỰA TRÊN TRẠNG THÁI VÀ spriteNum
-        // Luôn kiểm tra bounds để tránh lỗi IndexOutOfBoundsException
-        if (state.equals("turn") && spriteNum < TURN_FRAMES) {
-            currentFrame = turnFrames[spriteNum];
-        } else if (state.equals("swim") && spriteNum < SWIM_IDLE_FRAMES) {
-            currentFrame = swimFrames[spriteNum];
-        } else if (state.equals("idle") && spriteNum < SWIM_IDLE_FRAMES) {
-            currentFrame = idleFrames[spriteNum];
-        }
+        if (state.equals("eat") && spriteNum < EAT_FRAMES) currentFrame = eatFrames[spriteNum];
+        else if (state.equals("turn") && spriteNum < TURN_FRAMES) currentFrame = turnFrames[spriteNum];
+        else if (state.equals("swim") && spriteNum < SWIM_FRAMES) currentFrame = swimFrames[spriteNum];
+        else if (spriteNum < IDLE_FRAMES) currentFrame = idleFrames[spriteNum];
 
         if (currentFrame != null) {
-            
-            int targetWidth = gp.tileSize;
-            int targetHeight = gp.tileSize;
+            // Vẽ theo kích thước thật đã được scale
+            int drawWidth = this.width;
+            int drawHeight = this.height;
             
             AffineTransform oldTransform = g2.getTransform();
+            
+            int screenX = x - gp.cameraX;
+            int screenY = y - gp.cameraY;
+            
+            g2.translate(screenX, screenY);
 
-            // >> BƯỚC 2: DỊCH CHUYỂN G2D ĐẾN VỊ TRÍ CỦA CÁ
-            g2.translate(x, y);
-            // 2. XỬ LÝ LẬT HÌNH (FLIP) CHO HƯỚNG DI CHUYỂN TRÁI/PHẢI
-           if (currentFacing.equals("right") && !state.equals("turn")) {
-            // Lật hình ngang qua trục Y và dịch chuyển ngược lại bằng targetWidth
-            g2.transform(AffineTransform.getScaleInstance(-1, 1));
-            g2.translate(-targetWidth, 0); 
+            if (currentFacing.equals("right") && !state.equals("turn")) {
+                g2.transform(AffineTransform.getScaleInstance(-1, 1));
+                g2.translate(-drawWidth, 0);
             }
-            // Lưu ý: Nếu trạng thái là "turn", ta không lật.
 
-           
-            g2.drawImage(currentFrame, 0, 0, targetWidth, targetHeight, null);
+            g2.drawImage(currentFrame, 0, 0, drawWidth, drawHeight, null);
             g2.setTransform(oldTransform);
-            }
+            
+            if (showEffect && upBubble != null) {
+            // 1. Cấu hình kích thước mong muốn
+            int bubbleSize = 64; 
+            
+            // 2. Tính toán vị trí X để bong bóng nằm GIỮA đầu Player
+            // Công thức: (Tâm Player) - (Một nửa kích thước bong bóng) - (Camera)
+            int bubbleX = (int)(x + width/2 - bubbleSize/2) - gp.cameraX;
+            
+            // 3. Tính toán vị trí Y (Bay lên)
+            int bubbleY = (int)(y - 20) - gp.cameraY;
+            int floatOffset = (60 - effectCounter); 
+            
+            // 4. Vẽ với kích thước mới (bubbleSize, bubbleSize)
+            g2.drawImage(upBubble, 
+                bubbleX, 
+                bubbleY - floatOffset, 
+                bubbleSize, // Chiều rộng mới: 64
+                bubbleSize, // Chiều cao mới: 64
+                null
+            );
+        }
+        }
+    }
+    
+    public void eating() {
+        state = "eat";
+        spriteNum = 0;
+        spriteCounter = 0;
     }
 }
-

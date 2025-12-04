@@ -1,98 +1,130 @@
 package entity;
 
 import java.awt.Graphics2D;
-import java.awt.Rectangle;
-import java.io.IOException;
+import java.awt.geom.AffineTransform;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Random;
-import javax.imageio.ImageIO;
 import main.GamePanel;
 
-public class Aquarium extends Entity {
+public class Aquarium {
     GamePanel gp;
     Random rand = new Random();
     
-    // Danh sách chứa tất cả cá (trừ người chơi)
-    public ArrayList<Entity> entities = new ArrayList<>();
+    // Danh sách chứa Enemy
+    public ArrayList<Enemy> entities = new ArrayList<>();
     
-    // Bộ đếm thời gian
-    int spawnCounter = 0;
+    // Các biến đếm nội bộ (Internal State)
+    private int spawnCounter = 0;
+    private int moveTick = 0; 
+    final int SLOW_DOWN_FACTOR = 2; 
 
     public Aquarium(GamePanel gp) {
         this.gp = gp;
     }
 
-    // Hàm sinh ngẫu nhiên 1 con cá
-    public void spawnEntity() {
-        Entity obj = new Entity();
-
-        // 1. Random vị trí (trong phạm vi screenHeight)
-        obj.x = rand.nextInt(0,2);
-        obj.direction = "right";
-        obj.y = rand.nextInt(gp.screenHeight - gp.tileSize); // Vị trí y ngẫu nhiên
-        if(obj.x == 1) {
-            obj.x = gp.screenWidth; // Bên ngoài
-            obj.direction = "left";
-        }
-        
-        obj.solidArea = new Rectangle(obj.x, obj.y, gp.tileSize, gp.tileSize);
-        
-        obj.name = "puff";
-        obj.speed = 5;
-        if ("left".equals(obj.direction)) {
-            try {
-                obj.up1 = ImageIO.read(getClass().getResourceAsStream("/res/"+ obj.name +"swim1.png"));
-            } catch (IOException e) {
-                System.out.println("Lỗi khi tải ảnh thức ăn!");
-                e.printStackTrace();
-            }
-        } else
-        {
-            try {
-                obj.up1 = ImageIO.read(getClass().getResourceAsStream("/res/"+ obj.name +"swim2.png"));
-            } catch (IOException e) {
-                System.out.println("Lỗi khi tải ảnh thức ăn!");
-                e.printStackTrace();
-            }
-        }
-        // obj.image = ... (Load ảnh cá bé ở đây hoặc trong class Entity)
-
-        entities.add(obj); // Thêm vào danh sách
+    // >> PHƯƠNG THỨC MỚI: Dùng để Reset game sạch sẽ
+    public void reset() {
+        entities.clear();
+        spawnCounter = 0;
+        moveTick = 0;
     }
 
-    // Hàm cập nhật (Gọi trong GamePanel.update)
+    public void spawnEntity() {
+        // Lấy danh sách quái từ Level hiện tại
+        ArrayList<Feature.MonsterType> types = gp.currentLevel.monsterTypes;
+        if (types == null || types.isEmpty()) return;
+
+        // --- Logic Spawn có trọng số (Weighted Random) ---
+        int index = 0;
+        int dice = rand.nextInt(100);
+
+        // Giả sử Level 1 có 3 loại: Minnow, Surgeonfish, Lionfish
+        if (types.size() >= 3) {
+            if (dice < 60) index = 0;      // 60% ra Minnow
+            else if (dice < 90) index = 1; // 30% ra Surgeonfish
+            else index = 2;                // 10% ra Lionfish
+        } else {
+            index = rand.nextInt(types.size());
+        }
+
+        Feature.MonsterType selectedType = types.get(index);
+        
+        // Giảm độ khó đầu game: Nếu điểm thấp mà ra Boss -> Đổi thành Minnow
+        if (gp.score < 300 && selectedType.name.equals("lionfish")) {
+            if (rand.nextInt(100) < 90) selectedType = types.get(0);
+        }
+
+        Enemy monster = gp.feature.createMonster(selectedType, gp);
+
+        // Random vị trí & hướng
+        boolean isRight = rand.nextBoolean();
+        monster.direction = isRight ? "right" : "left";
+        monster.y = rand.nextInt(gp.worldHeight - monster.height);
+        
+        if (isRight) monster.x = -monster.width;
+        else monster.x = gp.worldWidth;
+
+        monster.dy = rand.nextInt(3) - 1; 
+        monster.actionLockCounter = 0;
+        
+        entities.add(monster);
+    }
+
     public void update() {
-        // --- LOGIC SINH CÁ ---
         spawnCounter++;
-        if (spawnCounter > 60) { // Cứ 60 khung hình (khoảng 1s) thì sinh 1 con
+        // Tốc độ spawn nhanh hơn một chút (50 frames)
+        if (spawnCounter > 50) { 
             spawnEntity();
             spawnCounter = 0;
         }
 
-        // --- CẬP NHẬT VỊ TRÍ TỪNG CON ---
+        moveTick++;
+        boolean allowMove = (moveTick % SLOW_DOWN_FACTOR == 0);
+
         for (int i = 0; i < entities.size(); i++) {
-            Entity e = entities.get(i);
+            Enemy e = entities.get(i);
             if (e != null) {
-                if ("left".equals(e.direction))
-                {
-                    e.x -= e.speed; // Di chuyển sang trái
-                    e.solidArea.x = e.x;
-                } else {
-                    e.x += e.speed; // Di chuyển sang phải
-                    e.solidArea.x = e.x;
+                // Update AI & Position
+                e.update(allowMove);
+                
+                // Garbage Collection
+                if (e.x < -200 || e.x > gp.worldWidth + 200) {
+                    entities.remove(i);
+                    i--; 
                 }
             }
-            // (Tùy chọn) Xóa cá nếu bơi ra xa quá hoặc danh sách quá dài
+        }
+        
+        if (moveTick > 1000) moveTick = 0;
+        checkPredatorCollision();
+    }
+
+    private void checkPredatorCollision() {
+        for (int i = 0; i < entities.size(); i++) {
+            Enemy predator = entities.get(i);
+            for (int j = 0; j < entities.size(); j++) {
+                if (i == j) continue; 
+                Enemy prey = entities.get(j);
+                
+                if (predator.solidArea.intersects(prey.solidArea)) {
+                    int sizeA = predator.width * predator.height;
+                    int sizeB = prey.width * prey.height;
+
+                    if (sizeA > sizeB * 1.2) {
+                        predator.startEating();
+                        entities.remove(j);
+                        if (j < i) i--; 
+                        j--; 
+                    }
+                }
+            }
         }
     }
 
-    // Hàm vẽ (Gọi trong GamePanel.paintComponent)
     public void draw(Graphics2D g2) {
-        for (int i = 0; i < entities.size(); i++) {
-            Entity e = entities.get(i);
-            if (e != null) { 
-                g2.drawImage(e.up1, e.x, e.y, e.up1.getWidth(), e.up1.getHeight(), null);
-            }
+        for (Enemy e : entities) {
+            e.draw(g2);
         }
     }
 }

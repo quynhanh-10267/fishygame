@@ -1,102 +1,124 @@
 ```mermaid
 classDiagram
-    %% Packages / namespaces
+    %% --- PACKAGES & IMPORTS ---
     namespace main {
         class FishyGame
         class UI
         class GamePanel
-        class KeyHandler
+        class MouseHandler
         class CollisionChecker
     }
-    namespace enity {
+    namespace entity {
         class Entity
         class Player
         class Aquarium
+        class Feature
     }
-    namespace javax.swing {
-        class JFrame
+    namespace java_awt_event {
+        class MouseMotionListener
+    }
+    namespace javax_swing {
         class JPanel
+        class JFrame
     }
 
-    %% Inheritance
+    %% --- INHERITANCE (IS-A) ---
     JPanel <|-- GamePanel : extends
+    JPanel <|-- UI : extends
     Entity <|-- Player : extends
-    Entity <|-- Aquarium : extends
+    MouseMotionListener <|.. MouseHandler : implements
 
-    %% Creation / usage
-    FishyGame ..> JFrame : "creates"
-    FishyGame ..> UI : "creates & shows"
-    UI ..> GamePanel : "creates & switches to"
-    GamePanel *--> Player : "has a"
-    GamePanel *--> Aquarium : "has a"
-    GamePanel *--> KeyHandler : "has a"
-    GamePanel *--> CollisionChecker : "uses"
+    %% --- ASSOCIATIONS (HAS-A / USES) ---
+    FishyGame ..> UI : creates
+    FishyGame ..> GamePanel : creates
+    
+    UI --> GamePanel : reference
+    
+    GamePanel --> MouseHandler : owns
+    GamePanel --> Aquarium : owns
+    GamePanel --> Feature : owns
+    GamePanel --> Player : owns
+    GamePanel --> CollisionChecker : owns
 
-    CollisionChecker ..> Player : "checks collisions"
-    CollisionChecker ..> Aquarium : "reads entities"
+    %% Aquarium contains many Entities (Aggregation)
+    Aquarium o-- Entity : list
+    
+    %% Dependencies
+    Player ..> MouseHandler : uses coordinates
+    Aquarium ..> Feature : uses Factory logic
+    CollisionChecker ..> Player : checks
+    CollisionChecker ..> Entity : checks list
 
-    %% Class details (key fields / methods)
+    %% --- CLASS DETAILS ---
     class FishyGame {
-        +main(String[] args) : void
+        +main(String[] args)
     }
 
     class UI {
         -window : JFrame
         -gamePanel : GamePanel
-        +startGame() : void
-        +paintComponent(Graphics g) : void
+        +startGame() void
+        +paintComponent(Graphics g) void
+    }
+
+    class MouseHandler {
+        +mouseX : int
+        +mouseY : int
+        +mouseDragged(MouseEvent)
+        +mouseMoved(MouseEvent)
     }
 
     class GamePanel {
-        -player : Player
-        -aquarium : Aquarium
-        -keyH : KeyHandler
-        -collisionChecker : CollisionChecker
-        +startGameThread() : void
-        +run() : void
-        +update() : void
-        +paintComponent(Graphics g) : void
+        +screenWidth : int
+        +screenHeight : int
+        +feature : Feature
+        +aquarium : Aquarium
+        +score : int
+        +lives : int
+        +startGameThread() void
+        +update() void
+        +paintComponent(Graphics g) void
     }
 
-    class KeyHandler {
-        +upPressed : boolean
-        +downPressed : boolean
-        +leftPressed : boolean
-        +rightPressed : boolean
-        +keyPressed(KeyEvent) : void
-        +keyReleased(KeyEvent) : void
-    }
-
-    class CollisionChecker {
-        -gp : GamePanel
-        +checkPlayerCollisions(Player) : List~Entity~
-        +handlePlayerEntityCollision(Player, Entity) : void
-    }
-
-    class Entity {
-        +x : int
-        +y : int
-        +width : int
-        +height : int
-        +solidArea : Rectangle
-        +getCollisionBox() : Rectangle
-        +collidesWith(Entity) : boolean
-    }
-
-    class Player {
-        -gp : GamePanel
-        -keyH : KeyHandler
-        +update() : void
-        +draw(Graphics2D) : void
-        +collisionChecker(Aquarium) : void
+    class Feature {
+        +oyster : MonsterType
+        +jellyPink : MonsterType
+        +john : MonsterType
+        +createMonster(MonsterType) Entity
+        +setupMonsters() void
     }
 
     class Aquarium {
         -gp : GamePanel
         -entities : ArrayList~Entity~
-        +spawnEntity() : void
-        +update() : void
-        +draw(Graphics2D) : void
+        -spawnCounter : int
+        +spawnEntity() void
+        +update() void
+        +draw(Graphics2D) void
+    }
+
+    class Entity {
+        +x : int
+        +y : int
+        +speed : int
+        +direction : String
+        +solidArea : Rectangle
+        +collisionOn : boolean
+    }
+
+    class Player {
+        -mouseH : MouseHandler
+        -state : String
+        -currentFacing : String
+        +update() void
+        +draw(Graphics2D) void
+        +getPlayerImageByLoop() void
+    }
+
+    class CollisionChecker {
+        -gp : GamePanel
+        +checkPlayerVsEnemies(Player, List~Entity~) void
+        -processCollision(Player, Entity, int) void
     }
 
     %% Notes

@@ -7,21 +7,44 @@ public class Entity {
     
     public int x, y;
     public int speed;
-    public BufferedImage up1, down1, left1, right1, up2, down2, left2, right2;
-    public String direction;
+    public int width = 64, height = 64;
+    
+    // State
+    public String direction = "left"; 
+    public String state = "swim";     
+    
+    // Frames
     public BufferedImage[] swimFrames;
-    public BufferedImage[] idleFrames;
+    public BufferedImage[] eatFrames;
     public BufferedImage[] turnFrames;
-    public String state = "idle";
+    public BufferedImage[] idleFrames;
 
+    // Logic
     public Rectangle solidArea;
-
-    // collision properties
-    public int width = 64;
-    public int height = 64;
     public boolean collisionOn = false;
-
     public int spriteCounter = 0;
-    public int spriteNum = 1;
+    public int spriteNum = 0;
     public String name;
+    public int scoreValue;
+    
+    // >> ĐÃ XÓA: dy, actionLockCounter (Vì đã chuyển sang Enemy.java)
+    
+    // Helpers
+    public void startEating() {
+        if (eatFrames != null && eatFrames.length > 0 && !state.equals("turn")) {
+            state = "eat"; spriteNum = 0; spriteCounter = 0;
+        }
+    }
+
+    public void startTurning() {
+        if (turnFrames != null && turnFrames.length > 0 && state.equals("swim")) {
+            state = "turn"; spriteNum = 0; spriteCounter = 0;
+        } else {
+            flipDirection();
+        }
+    }
+    
+    public void flipDirection() {
+        direction = direction.equals("left") ? "right" : "left";
+    }
 }

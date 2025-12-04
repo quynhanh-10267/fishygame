@@ -42,18 +42,13 @@ public class UI extends JPanel {
         this.setPreferredSize(new Dimension(960, 730));
         this.window = window;
         this.gamePanel = gamePanel;
-        try{
-            background = ImageIO.read((getClass().getResourceAsStream("/res/screen/background.png")));
-            bambooFrame = ImageIO.read((getClass().getResourceAsStream("/res/screen/menuu.png")));
-            titleLogo = ImageIO.read((getClass().getResourceAsStream("/res/screen/gametitle.png")));
-            seashellButton1 = ImageIO.read((getClass().getResourceAsStream("/res/screen/sanho1.png")));
-            seashellButton2 = ImageIO.read((getClass().getResourceAsStream("/res/screen/sanho2.png")));
-            andyFish = ImageIO.read((getClass().getResourceAsStream("/res/idle3.png")));
-
-
-        } catch(IOException e){
-
-        }
+        
+        background = loadImage("/res/screen/background.png");
+        bambooFrame = loadImage("/res/screen/menuu.png");
+        titleLogo = loadImage("/res/screen/gametitle.png");
+        seashellButton1 = loadImage("/res/screen/sanho1.png");
+        seashellButton2 = loadImage("/res/screen/sanho2.png");
+        andyFish = loadImage("/res/angelfish/angelfishidle1.png");
         // xu ly click chuot de chuyen man hinh
         this.addMouseListener(new MouseAdapter() {
             @Override
@@ -79,6 +74,20 @@ public class UI extends JPanel {
                 }
             }            
         }));
+    }
+    private Image loadImage(String path) {
+        try {
+            // Kiểm tra InputStream trước khi đưa vào ImageIO
+            java.io.InputStream is = getClass().getResourceAsStream(path);
+            if (is == null) {
+                System.err.println("Error: Not found path: " + path);
+                return null; 
+            }
+            return ImageIO.read(is);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     // THÊM HÀM NÀY ĐỂ CHUYỂN MÀN HÌNH
@@ -162,8 +171,8 @@ public class UI extends JPanel {
         // 6. VẼ CÁ VÀ NHÃN "Andy"
         g2d.setFont(bodyFont); // Trả về font bình thường
         if (andyFish != null) {
-            int fishW = (int)(frameW * 0.11); // Cá rộng khoảng 18% khung
-            int fishH = (int)(fishW * 0.6);   // Tỷ lệ chiều cao
+            int fishW = (int)(frameW * 0.08); // Cá rộng khoảng 18% khung
+            int fishH = (int)(fishW * 0.8);   // Tỷ lệ chiều cao
             
             int fishX = textStartX + (int)(frameW * 0.63); 
             // Nằm ngang hàng với đoạn văn bản thứ 2
