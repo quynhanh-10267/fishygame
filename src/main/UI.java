@@ -23,32 +23,39 @@ public class UI extends JPanel {
     // xanh la dam
     public final Color BTN_TEXT_COLOR = new Color(0, 100, 0);
     public Font titleFont = new Font("Serif", Font.PLAIN, 42); // Font mỏng hơn chút
-    public Font bodyFont = new Font("Serif", Font.PLAIN, 28);
-    private Font buttonFont = new Font("Brush Script MT", Font.BOLD, 36);
+    public Font bodyFont = new Font("Serif", Font.PLAIN, 25);
+    private Font buttonFont = new Font("Brush Script MT", Font.BOLD, 32);
     public final String[] introLines = {
-        "Drag the mouse to control, avoid bigger fish,",
-        "try to eat smaller fish to make",
-        "lead grew rapidly.",
+        "Drag  the  mouse  to  control,",
+        "avoid  bigger  fish,  try  to",
+        "eat  smaller  fish  to  make",
+        "lead  grew  rapidly.",
         "", 
-        "Press the left mouse button,",
-        "can accelerate to catch small fish",
+        "Press  the  left  mouse  button,",
+        "can  accelerate  to  catch  small  fish",
         "",
-        "Continuous eat smaller fish, can make the",
-        "score into times increase.."
+        "Continuous  eat  smaller  fish,  can  make",
+        "the  score  into  times  increase.."
     };
 
 
     public UI(JFrame window, GamePanel gamePanel){
-        this.setPreferredSize(new Dimension(960, 730));
+        this.setPreferredSize(new Dimension(gamePanel.screenWidth, gamePanel.screenHeight));
         this.window = window;
         this.gamePanel = gamePanel;
-        
-        background = loadImage("/res/screen/background.png");
-        bambooFrame = loadImage("/res/screen/menuu.png");
-        titleLogo = loadImage("/res/screen/gametitle.png");
-        seashellButton1 = loadImage("/res/screen/sanho1.png");
-        seashellButton2 = loadImage("/res/screen/sanho2.png");
-        andyFish = loadImage("/res/angelfish/angelfishidle1.png");
+
+        try {
+            background = ImageIO.read(getClass().getResourceAsStream("/res/screen/background.png"));
+            bambooFrame = ImageIO.read(getClass().getResourceAsStream("/res/screen/menuu.png"));
+            titleLogo = ImageIO.read(getClass().getResourceAsStream("/res/screen/gametitle.png"));
+            seashellButton1 = ImageIO.read(getClass().getResourceAsStream("/res/screen/sanho1.png"));
+            seashellButton2 = ImageIO.read(getClass().getResourceAsStream("/res/screen/sanho2.png"));
+            andyFish = ImageIO.read(getClass().getResourceAsStream("/res/angelfish/angelfishidle1.png"));
+    
+
+        } catch (IOException e) { e.printStackTrace(); }
+    
+       
         // xu ly click chuot de chuyen man hinh
         this.addMouseListener(new MouseAdapter() {
             @Override
@@ -75,20 +82,7 @@ public class UI extends JPanel {
             }            
         }));
     }
-    private Image loadImage(String path) {
-        try {
-            // Kiểm tra InputStream trước khi đưa vào ImageIO
-            java.io.InputStream is = getClass().getResourceAsStream(path);
-            if (is == null) {
-                System.err.println("Error: Not found path: " + path);
-                return null; 
-            }
-            return ImageIO.read(is);
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
+    
 
     // THÊM HÀM NÀY ĐỂ CHUYỂN MÀN HÌNH
     public void startGame() {
@@ -112,30 +106,30 @@ public class UI extends JPanel {
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
-        int width = getWidth();
-        int height = getHeight();
+        int width = gamePanel.screenWidth;
+        int height = gamePanel.screenHeight;
 
         // 1. Vẽ Nền
         if (background != null) g2d.drawImage(background, 0, 0, width, height, null);
 
         // 2. Vẽ Khung tre
-        int frameMargin = (int)(width * 0.06);
+        int frameMargin = (int)(width * 0.1);
         int frameW = width - frameMargin * 2;
-        int frameH = (int)(height - frameMargin * 1.3);
-        int frameY = (int)(height*0.08);
+        int frameH = (int)(height - frameMargin * 1);
+        int frameY = (int)(height*0.07);
         if (bambooFrame != null) g2d.drawImage(bambooFrame, frameMargin, frameY, frameW, frameH, null);
 
         // 3. Vẽ Logo Title
         int logoW = (int)(width * 0.38);
         int logoH = (int)(logoW * 0.4); 
-        if (titleLogo != null) g2d.drawImage(titleLogo, (width - logoW) / 2, frameY - (int)(logoH * 0.2), logoW, logoH, null);
+        if (titleLogo != null) g2d.drawImage(titleLogo, (width - logoW) / 2, frameY - (int)(logoH * 0.1), logoW, logoH, null);
 
         // 4. Vẽ Chữ "GameIntro"
         g2d.setColor(TEXT_COLOR_CREAM);
         g2d.setFont(titleFont); // Dùng font Serif cho giống style cổ điển
         String title = "GameIntro";
         FontMetrics fmTitle = g2d.getFontMetrics();
-        int titleY = (int)(height*0.32);
+        int titleY = (int)(height*0.3);
         g2d.drawString(title, (width - fmTitle.stringWidth(title)) / 2, titleY);
 
         // 5. Vẽ nội dung hướng dẫn
@@ -153,7 +147,7 @@ public class UI extends JPanel {
         // Lùi vào từ lề trái khung tre khoảng 10% chiều rộng khung
         int textStartX = frameMargin + (int)(frameW * 0.1); 
         // Bắt đầu vẽ từ dưới tiêu đề "GameIntro"
-        int textStartY = titleY + textLineHeight * 2;
+        int textStartY = (int)(titleY + textLineHeight * 1 + 15 );
         // Vòng lặp vẽ từng dòng chữ
         for (int i = 0; i < introLines.length; i++) {
             int lineY = textStartY + i * (int)(textLineHeight * 0.9);
@@ -161,7 +155,7 @@ public class UI extends JPanel {
             //g2d.drawString(introLines[i], textStartX, textStartY + i * (int)(textLineHeight * 0.9));
             // Vẽ bóng đen mờ cho từng dòng chữ (Tạo cảm giác có chiều sâu)
             g2d.setColor(new Color(0, 0, 0, 80)); // Đen mờ
-            g2d.drawString(introLines[i], textStartX + 1, lineY + 1); // Lệch 1 pixel
+            g2d.drawString(introLines[i], textStartX + 1, lineY + 1 ); // Lệch 1 pixel
 
             // Vẽ chữ chính lên trên
             g2d.setColor(TEXT_COLOR_CREAM);
@@ -171,15 +165,15 @@ public class UI extends JPanel {
         // 6. VẼ CÁ VÀ NHÃN "Andy"
         g2d.setFont(bodyFont); // Trả về font bình thường
         if (andyFish != null) {
-            int fishW = (int)(frameW * 0.08); // Cá rộng khoảng 18% khung
-            int fishH = (int)(fishW * 0.8);   // Tỷ lệ chiều cao
+            int fishW = (int)(frameW * 0.11); // Cá rộng khoảng 18% khung
+            int fishH = (int)(fishW * 0.9);   // Tỷ lệ chiều cao
             
             int fishX = textStartX + (int)(frameW * 0.63); 
             // Nằm ngang hàng với đoạn văn bản thứ 2
-            int fishY = textStartY + textLineHeight * 2; 
+            int fishY = textStartY + textLineHeight * 2 - 10; 
 
             // --- VẼ HÌNH TRÒN ĐEN SAU LƯNG CÁ ---
-            int circleSize = (int)(fishW * 1.2); // Hình tròn to hơn con cá 20%
+            int circleSize = (int)(fishW * 1.3); // Hình tròn to hơn con cá 20%
             int circleX = fishX + (fishW - circleSize) / 2; // Căn giữa cá
             int circleY = fishY + (fishH - circleSize) / 2;
 

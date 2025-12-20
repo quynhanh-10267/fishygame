@@ -41,7 +41,7 @@ public class CollisionChecker {
         int playerSize = player.width * player.height;
         int enemySize = enemy.width * enemy.height;
 
-        if (playerSize > enemySize) {
+        if (playerSize*1.5 >= enemySize*0.5) {
             // ĂN
             gp.aquarium.entities.remove(index);
             gp.score += enemy.scoreValue;
