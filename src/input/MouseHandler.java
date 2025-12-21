@@ -29,6 +29,9 @@ public class MouseHandler extends MouseAdapter {
             else if (gp.exitRect != null && gp.exitRect.contains(mouseX, mouseY)) {
                 gp.commandNum = 1; // Đang chọn Exit
             } 
+            else if (gp.gameOptionRect != null && gp.gameOptionRect.contains(mouseX, mouseY)) {
+                gp.commandNum = 2; // Đang chọn Gameoptions
+            }
             // Không chọn gì
             else {
                 gp.commandNum = -1;
@@ -55,6 +58,7 @@ public class MouseHandler extends MouseAdapter {
             else if (gp.exitRect != null && gp.exitRect.contains(mx, my)) {
                 System.exit(0);
             }
+        
         }
     }
 }

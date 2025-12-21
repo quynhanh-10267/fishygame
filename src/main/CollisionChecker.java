@@ -55,7 +55,7 @@ public class CollisionChecker {
             
             if (gp.lives > 0) {
                 // >> TRƯỜNG HỢP 1: CÒN MẠNG -> PAUSE GAME + HIỆN SORRY
-                gp.gameState = gp.pauseState; // Dừng game
+                gp.gameState = gp.respawnState; // Dừng game
                 gp.banner.show("SORRY", 180); // Hiện chữ SORRY trong 2 giây (120 frames)
                 
             } else {

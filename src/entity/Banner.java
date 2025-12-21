@@ -58,7 +58,7 @@ public class Banner {
                 char c = text.charAt(i);
                 if (c == ' ') { images[i] = null; continue; }
                 
-                // Hỗ trợ cả chữ cái và số (File ảnh phải có tên 1.png, 2.png...)
+                // Hỗ trợ cả chữ cái và số
                 String path = "/res/text/" + c + ".png";
                 if (getClass().getResourceAsStream(path) != null) {
                     images[i] = ImageIO.read(getClass().getResourceAsStream(path));
@@ -67,7 +67,6 @@ public class Banner {
         } catch (Exception e) { e.printStackTrace(); }
     }
 
-    // ... (Hàm update và draw giữ nguyên logic cũ) ...
     public void update() {
         if (!active || letterY == null) return;
         tick++;
