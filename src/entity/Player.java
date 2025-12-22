@@ -197,17 +197,39 @@ public class Player extends Entity {
         double scale = 1.0;
 
         // >> LOGIC SCALE MỚI (Dựa trên tính toán diện tích)
-        if (gp.score >= 900) {
-            newLevel = 3;
-            scale = 2; // Size: 200x168 (Area 33,600 > Lionfish 28,640)
-        } else if (gp.score >= 300) {
-            newLevel = 2;
-            scale = 1.5; // Size: 150x126 (Area 18,900 > Surgeonfish 17,850)
-        } else {
-            newLevel = 1;
-            scale = 1.0; // Size: 50x40 (Area 2000 > Minnow 3120)
+        if(gp.score <= 2000)
+        {
+            if (gp.score >= 900) {
+                newLevel = 3;
+                scale = 2; // Size: 100x80 (Area 33,600 > Lionfish 28,640)
+            } else if (gp.score >= 300) {
+                newLevel = 2;
+                scale = 1.5; // Size: 75x63 (Area 4,725 > Surgeonfish 17,850)
+            } else {
+                newLevel = 1;
+                scale = 1.0; // Size: 50x40 (Area 2000 > Minnow 3120)
+            }
         }
-
+        else if(gp.score <= 5000) //level 2 > 2,000 points
+        {
+            if (gp.score >= 3500) {
+                newLevel = 5;
+                scale = 2.5; // Size: 125x100 (Area 18,000 > Clownfish 16,200)
+            } else if (gp.score >= 2200) {
+                newLevel = 4;
+                scale = 2.25; // Size: 113x90 (Area 12,500 > Goldfish 12,000)
+            } 
+        }
+        else //level 3 > 5,000 points
+        {
+            if(gp.score >= 8000) {
+                newLevel = 7;
+                scale = 3.0; // Size: 150x120 (Area 36,000 > Butterflyfish 28,800)
+            } else if (gp.score >= 6000) {
+                newLevel = 6;
+                scale = 2.75; // Size: 138x110 (Area 15,180 > Angelfish 14,400)
+            }
+        }
         if (newLevel > currentLevel) {
             currentLevel = newLevel;
             updateSize(scale); 

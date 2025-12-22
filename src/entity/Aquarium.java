@@ -48,11 +48,6 @@ public class Aquarium {
 
         MonsterType selectedType = types.get(index);
 
-        // Giảm độ khó đầu game: Nếu điểm thấp mà ra Boss -> Đổi thành Minnow
-        if (gp.score < 300 && selectedType.name.equals("lionfish")) {
-            if (rand.nextInt(100) < 90) selectedType = types.get(0);
-        }
-
         // Tạo Enemy từ MonsterType đã chọn
         Enemy monster = selectedType.createMonster(gp);
 

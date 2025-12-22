@@ -137,9 +137,6 @@ public class GamePanel extends JPanel implements Runnable {
             npc2 = ImageIO.read(getClass().getResourceAsStream("/res/surgeonfish/surgeonfishswim6.png"));
             npc3 = ImageIO.read(getClass().getResourceAsStream("/res/lionfish/lionfishidle1.png"));
             hudBackground = ImageIO.read(getClass().getResourceAsStream("/res/screen/menuOcean3.jpg"));
-            btnGameOption = ImageIO.read(getClass().getResourceAsStream("/res/screen/gameoption.png"));
-            btnGameOption2 = ImageIO.read(getClass().getResourceAsStream("/res/screen/gameoption2.png"));
-
         } catch (IOException e) { e.printStackTrace(); }
     }
 
@@ -207,10 +204,6 @@ public class GamePanel extends JPanel implements Runnable {
             // Cập nhật banner nền (nếu muốn chữ Sorry vẫn nổi lên khi pause)
             banner.update();
             return; // Dừng logic game
-        } 
-        else {
-            // Ẩn chuột khi chơi
-            if (this.getCursor() != blankCursor) this.setCursor(blankCursor);
         }
 
         banner.update();
@@ -225,6 +218,8 @@ public class GamePanel extends JPanel implements Runnable {
         }
 
         if (gameState == playState) {
+            if (this.getCursor() != blankCursor) this.setCursor(blankCursor);
+
             if (!startBannerShown) {
                 if (!banner.isActive()) startBannerShown = true; 
             }
@@ -251,6 +246,8 @@ public class GamePanel extends JPanel implements Runnable {
             cChecker.checkPlayerVsEnemies(player, aquarium.entities);
             
             if (score >= currentLevel.winScore) {
+                currentLevel.levelNum ++;
+                currentLevel = new Level(currentLevel.levelNum);
                 stopMusic();// stop background music
                 gameState = winState;
             }
@@ -258,6 +255,9 @@ public class GamePanel extends JPanel implements Runnable {
         else if (gameState == pauseState) {
             // Logic thoát khỏi Pause nếu banner SORRY hết giờ (dành cho trường hợp mất mạng)
             if (!banner.isActive() && lives > 0) gameState = playState;
+        }
+        else if (gameState == gameOverState) {
+            // Chờ người chơi nhấn New Game trong Menu
         }
     }
 
@@ -283,23 +283,25 @@ public class GamePanel extends JPanel implements Runnable {
         drawGameUI(g2);
 
         // 3. Draw Overlay (Win/Lose)
-        if (gameState == winState || gameState == gameOverState) {
-            stopMusic();
-            g2.setColor(new Color(0, 0, 0, 150)); 
-            g2.fillRect(0, 0, screenWidth, screenHeight);
-            if (gameState == winState) {
-                g2.setFont(new Font("Arial", Font.BOLD, 30));
-                g2.setColor(Color.WHITE);
-                String subText = "Level Completed!";
-                int subLength = (int)g2.getFontMetrics().getStringBounds(subText, g2).getWidth();
-                g2.drawString(subText, screenWidth / 2 - subLength / 2, screenHeight/2 + 100);
-            }
-        }
-        
         // 4. Draw Pause Menu
-        if (gameState == pauseState) {
+        if (gameState == pauseState || gameState == winState || gameState == gameOverState)
+        {
             stopMusic();
             drawPauseScreen(g2);
+            g2.setFont(new Font("Arial", Font.BOLD, 30));
+            g2.setColor(Color.white);
+            if (gameState == winState) {
+                String text = "You Won the Game!";
+                int length = (int)g2.getFontMetrics().getStringBounds(text, g2).getWidth();
+                g2.drawString(text, screenWidth / 2 - length / 2, screenHeight / 2);
+            }
+            else if(gameState == gameOverState)
+            {
+                String text = "You Lost the Game!";
+                int length = (int)g2.getFontMetrics().getStringBounds(text, g2).getWidth();
+                g2.drawString(text, screenWidth / 2 - length / 2, screenHeight / 2);
+            }
+            gameState = pauseState;
         }
 
         // 5. Draw Banner
@@ -335,7 +337,7 @@ public class GamePanel extends JPanel implements Runnable {
         int waveOffset = (int)(Math.sin(menuTick * 0.1) * 5); 
 
     //     Vẽ nút New Game
-       int y = newGameRect.y;
+        int y = newGameRect.y;
         
         // KIỂM TRA HOVER (commandNum == 0)
         if (commandNum == 0) {
@@ -348,7 +350,7 @@ public class GamePanel extends JPanel implements Runnable {
         }
             
         // Vẽ nút Exit
-       if (btnExit != null && btnExit2 != null) {
+        if (btnExit != null && btnExit2 != null) {
             int y1 = exitRect.y;
             
             if (commandNum == 1) {
@@ -359,21 +361,6 @@ public class GamePanel extends JPanel implements Runnable {
             } else {
                 // VẼ NÚT THƯỜNG KHI KHÔNG HOVER
                 g2.drawImage(btnExit, exitRect.x, y1, exitRect.width, exitRect.height, null);
-    
-            }
-        }
-        // Draw GameOption
-            if (btnGameOption != null && btnGameOption2 != null) {
-            int y2 = gameOptionRect.y;
-            
-            if (commandNum == 2) {
-                y2 += waveOffset;
-                // VẼ NÚT SÁNG (newgame2) KHI HOVER
-                g2.drawImage(btnGameOption2, gameOptionRect.x, y2, gameOptionRect.width, gameOptionRect.height, null);
-            
-            } else {
-                // VẼ NÚT THƯỜNG KHI KHÔNG HOVER
-                g2.drawImage(btnGameOption, gameOptionRect.x, y2, gameOptionRect.width, gameOptionRect.height, null);
     
             }
         }
@@ -428,7 +415,7 @@ public class GamePanel extends JPanel implements Runnable {
         // A. MENU TEXT (BÊN TRÁI)
         drawTextWithOutline(g2, "MENU", x, TEXT_Y_MAIN, FONT_OUTLINE, FONT_MAIN);
         x += 80; 
-       
+        
         // B. NPC ICONS (npc1, npc2, npc3)
         final int NPC_BASE_WIDTH = 45;  // Chiều rộng cơ sở (ngang)
         final int NPC_BASE_HEIGHT = 30; // Chiều cao cơ sở (dọc)
@@ -481,7 +468,7 @@ public class GamePanel extends JPanel implements Runnable {
         drawTextWithOutline(g2, "SCORE", SCORE_TEXT_X, TEXT_Y_MAIN, FONT_OUTLINE, FONT_MAIN);
         
         // VẼ KHUNG ĐIỂM (Dịch sang phải 80px từ chữ SCORE)
-         g2.setFont(new Font("Cooper Std Black", Font.BOLD, TEXT_SIZE + 10));
+        g2.setFont(new Font("Cooper Std Black", Font.BOLD, TEXT_SIZE + 10));
         int scoreBoxX = SCORE_TEXT_X + 120;
         drawTextWithOutline(g2, String.valueOf(score), scoreBoxX, TEXT_Y_MAIN, FONT_OUTLINE, Color.WHITE);
         g2.setFont(new Font("Cooper Std Black", Font.BOLD, TEXT_SIZE));
@@ -524,7 +511,7 @@ public class GamePanel extends JPanel implements Runnable {
         
         int npc2BarX = growthBarX + (int)(growthBarWidth * ((double)npc2Score / winScore));
         g2.fillPolygon(new int[]{npc2BarX, npc2BarX - TRIANGLE_SIZE, npc2BarX + TRIANGLE_SIZE}, 
-                   new int[]{barY + barHeight - TRIANGLE_SIZE + 5, barY + barHeight  + 10, barY + barHeight  + 10}, 3);
+                    new int[]{barY + barHeight - TRIANGLE_SIZE + 5, barY + barHeight  + 10, barY + barHeight  + 10}, 3);
         
         
         // MỐC NPC3 (900d)
@@ -536,7 +523,7 @@ public class GamePanel extends JPanel implements Runnable {
         int abilityStartX = (int)(HUD_WIDTH * 0.6);
         g2.setColor(Color.WHITE);
         drawTextWithOutline(g2, "LIVE", abilityStartX, TEXT_Y_SUB, FONT_OUTLINE, FONT_MAIN);
-       
+        
         // G. LIVES ICONS (Vị trí mạng sống)
         int livesIconStartX = abilityStartX + 120;
         final int LIVES_ICON_SIZE = 35; // Icon nhỏ hơn để vừa với vị trí này
@@ -561,7 +548,6 @@ public class GamePanel extends JPanel implements Runnable {
             }
         } 
     }
-    
 
     public void playMusic(int i) {
         sound.setFile(i);

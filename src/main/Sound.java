@@ -26,7 +26,6 @@ public class Sound {
         }
     }
 
-
     public void play() {
         if (clip != null) {
             clip.setFramePosition(0); // Rewind to the beginning
@@ -40,7 +39,7 @@ public class Sound {
         }
     }
 
-        public void stop() {
+    public void stop() {
             clip.stop();
         }
-    }
+}

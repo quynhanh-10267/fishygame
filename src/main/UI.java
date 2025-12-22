@@ -55,7 +55,7 @@ public class UI extends JPanel {
 
         } catch (IOException e) { e.printStackTrace(); }
     
-       
+        
         // xu ly click chuot de chuyen man hinh
         this.addMouseListener(new MouseAdapter() {
             @Override
@@ -102,7 +102,7 @@ public class UI extends JPanel {
     public void paintComponent(Graphics g){
         super.paintComponent(g);
         Graphics2D g2d = (Graphics2D) g;
-       
+        
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
@@ -140,10 +140,10 @@ public class UI extends JPanel {
         stretch.scale(1.25, 1.0); 
         // Tạo ra một font mới từ font cũ nhưng đã bị kéo dãn
         g2d.setFont(bodyFont.deriveFont(stretch));
-       
+        
         FontMetrics fmBody = g2d.getFontMetrics();
         int textLineHeight = fmBody.getHeight();
-      
+        
         // Lùi vào từ lề trái khung tre khoảng 10% chiều rộng khung
         int textStartX = frameMargin + (int)(frameW * 0.1); 
         // Bắt đầu vẽ từ dưới tiêu đề "GameIntro"
@@ -205,7 +205,7 @@ public class UI extends JPanel {
         // <--- SỬA LẠI: Đặt nút cao hơn một chút để đè lên cạnh dưới khung tre
         btnY = frameY + frameH - (int)(btnH * 1.2);
 
-       
+        
         Image currentBtnImage = isHovered ? seashellButton2 : seashellButton1;
 
         // Vẽ cái vỏ sò (nền nút)
@@ -222,7 +222,7 @@ public class UI extends JPanel {
         // Tính tọa độ để chữ nằm CHÍNH GIỮA cái vỏ sò
         int textX = btnX + (btnW - fmBtn.stringWidth(btnText)) / 2;
         int textY = btnY + (btnH - fmBtn.getHeight()) / 2 + fmBtn.getAscent();
-         g2d.drawString(btnText, textX, textY);
+        g2d.drawString(btnText, textX, textY);
 
          //TITLE STATE
 
